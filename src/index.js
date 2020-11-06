@@ -62,6 +62,12 @@ class Game extends React.Component {
           squares: Array(9).fill(null),
         },
       ],
+      historyStep: [
+        {
+          step: Array(2).fill(-1),
+          act: "?",
+        },
+      ],
       stepNumber: 0,
       xIsNext: true,
     };
@@ -69,13 +75,21 @@ class Game extends React.Component {
   // 每次点击格子的时候调用，将格子标记为“X”或者“O”
   handleClick(i) {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const historyStep = this.state.historyStep.slice(
+      0,
+      this.state.stepNumber + 1
+    );
     const current = history[history.length - 1];
     const squares = current.squares.slice();
+    const step = [Math.floor(i / 3), i % 3];
     // 该格子已经被标记过或者胜负已分，则直接返回不处理
     if (calculateWinner(squares) || squares[i]) return;
     squares[i] = this.state.xIsNext ? "X" : "O";
     this.setState({
       history: history.concat([{ squares: squares }]),
+      historyStep: historyStep.concat([
+        { step: step, act: this.state.xIsNext ? "X" : "O" },
+      ]),
       stepNumber: history.length,
       xIsNext: !this.state.xIsNext,
     });
@@ -95,10 +109,27 @@ class Game extends React.Component {
 
     // 渲染时光机按钮
     const moves = history.map((step, move) => {
-      const desc = move ? "go to move #" + move : "go to start";
+      const desc = move
+        ? "go to move #" +
+          move +
+          ": " +
+          this.state.historyStep[move].act +
+          " at (" +
+          (this.state.historyStep[move].step[0] + 1) +
+          ", " +
+          (this.state.historyStep[move].step[1] + 1) +
+          ")"
+        : "go to start";
       return (
         <li key={move}>
-          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+          <button
+            className={
+              move === this.state.stepNumber ? "game-info-strong" : null
+            }
+            onClick={() => this.jumpTo(move)}
+          >
+            {desc}
+          </button>
         </li>
       );
     });
